@@ -1,0 +1,57 @@
+﻿@model IEnumerable<Domain.ViewModels.AgeVM>
+
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="JoinedCount">Joined date</a>
+</p>
+
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                Grade Name
+            </th>
+            <th>
+               Min Age
+            </th>
+            <th>
+               Max Age 
+            </th>
+            <th>
+               Average Age
+            </th>
+            <th>
+                Sum Age
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MinAge)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.MaxAge)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.AverageAge)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.SumAge)
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
