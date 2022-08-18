@@ -19,6 +19,7 @@ namespace DataAccess
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<GradeSubject> GradeSubjects { get; set; }
+        public DbSet<Log> Logs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -32,6 +33,11 @@ namespace DataAccess
                 .HasForeignKey(s => s.GradeId)
                 .OnDelete(DeleteBehavior.NoAction);
             modelBuilder.Entity<Student>().Property<DateTime>("CreatedDate");
+
+            modelBuilder.Entity<Log>().ToTable("Log").HasKey(g => g.LogId);
+            modelBuilder.Entity<Log>().Property(p => p.LogLevel).IsRequired().HasMaxLength(15);
+            modelBuilder.Entity<Log>().Property(p => p.Message).IsRequired();
+            modelBuilder.Entity<Log>().Property<DateTime>("CreatedDate");
 
             modelBuilder.Entity<Grade>().ToTable("Grade").HasKey(g => g.GradeId);
             modelBuilder.Entity<Grade>().Property(p => p.GradeName).IsRequired().HasMaxLength(50);

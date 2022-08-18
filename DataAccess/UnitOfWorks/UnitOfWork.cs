@@ -1,5 +1,7 @@
 ﻿using DataAccess.Repositories;
+using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +22,7 @@ namespace DataAccess.UnitOfWorks
             Reports = new ReportRepo(_context);
             Exchanges = new ExchangeRepo(_context);
             //GradeSubjects = new GradeSubjectRepo(_context);
+           // Loggers = new LoggerRepo(_context);
         }
         public IGradeRepo Grades { get; private set; }
         public IStudentRepo Students { get; private set; }
@@ -27,20 +30,22 @@ namespace DataAccess.UnitOfWorks
         public IReportRepo Reports { get; private set; }
         public IExchangeRepo Exchanges { get; private set; }
         //public IGradeSubjectRepo GradeSubjects { get; private set; }
+        // public ILoggerRepo Loggers { get; private set; }
 
+        public void AddLog(LogLevel logLevel, string message)
+        {
+            var log = new Log
+            {
+                LogLevel = logLevel.ToString(),
+                Message = message,
+            };
+            _context.Add(log);
+            _context.SaveChanges();
+        }
 
         public int Complete()
         {
-            try
-            {
-                return _context.SaveChanges();
-            }
-            catch(Exception ex)
-            {
-
-                return 0;
-            }
-           
+            return _context.SaveChanges();
         }
         public void Dispose()
         {

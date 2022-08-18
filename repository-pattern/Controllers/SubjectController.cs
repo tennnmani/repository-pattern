@@ -7,9 +7,11 @@ namespace repository_pattern.Controllers
     public class SubjectController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public SubjectController(IUnitOfWork unitOfWork)
+        private readonly ILogger<SubjectController> _logger;
+        public SubjectController(IUnitOfWork unitOfWork, ILogger<SubjectController> logger)
         {
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public  IActionResult Index(
@@ -69,8 +71,19 @@ namespace repository_pattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Subjects.Add(subject);
-                _unitOfWork.Complete();
+                try
+                {
+                    _unitOfWork.Subjects.Add(subject);
+                    _unitOfWork.Complete();
+                    _logger.LogInformation($"Subject \"{subject.SubjectName}\" Saved");
+                }
+                catch(Exception ex)
+                {
+                    //add log to db
+                    _logger.LogError($"Error at saving Subject msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at saving Subject msg: {ex.Message}");
+                }
+
                 return RedirectToAction("Index");
 
             }
@@ -100,8 +113,19 @@ namespace repository_pattern.Controllers
 
             if (ModelState.IsValid)
             {
-                _unitOfWork.Subjects.Update(subject);
-                _unitOfWork.Complete();
+                try
+                {
+                    //throw new Exception("ERROR");
+                    _unitOfWork.Subjects.Update(subject);
+                    _unitOfWork.Complete();
+                    _logger.LogInformation($"Subject \"{subject.SubjectName}\" Editted");
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError($"Error at Editting Subject msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at Editting Subject msg: {ex.Message}");
+                }
+
                 return RedirectToAction("Index");
             }
 
@@ -116,9 +140,17 @@ namespace repository_pattern.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            _unitOfWork.Subjects.Remove(subject);
-            _unitOfWork.Complete();
-
+            try
+            {
+                _unitOfWork.Subjects.Remove(subject);
+                _unitOfWork.Complete();
+                _logger.LogInformation($"Subject \"{subject.SubjectName}\" Deleted");
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Error at Deleting Subject msg: {ex.Message}");
+                _unitOfWork.AddLog(LogLevel.Error, $"Error at Deleting Subject msg: {ex.Message}");
+            }
             return RedirectToAction(nameof(Index));
         }
     }

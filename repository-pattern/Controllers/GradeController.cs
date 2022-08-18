@@ -8,9 +8,11 @@ namespace repository_pattern.Controllers
     public class GradeController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public GradeController(IUnitOfWork unitOfWork)
+        private readonly ILogger<GradeController> _logger;
+        public GradeController(IUnitOfWork unitOfWork, ILogger<GradeController> logger)
         {
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
 
         public IActionResult Index(
@@ -68,8 +70,17 @@ namespace repository_pattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Grades.CreateGrade(grade, subjectIndex);
-
+                try
+                {
+                    _unitOfWork.Grades.CreateGrade(grade, subjectIndex);
+                    _logger.LogInformation($"Grade \"{grade.GradeName}\" Saved");
+                }
+                catch(Exception ex)
+                {
+                    //add log to db
+                    _logger.LogError($"Error at saving Grade msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at saving Grade msg: {ex.Message}");
+                }
                 return RedirectToAction("Index");
 
             }
@@ -101,7 +112,17 @@ namespace repository_pattern.Controllers
 
             if (ModelState.IsValid)
             {
-                _unitOfWork.Grades.UpdateGrade(grade, subjectIndex);
+                try
+                {
+                    //throw new Exception("ERROR");
+                    _unitOfWork.Grades.UpdateGrade(grade, subjectIndex);
+                    _logger.LogInformation($"Grade \"{grade.GradeName}\" Editted");
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError($"Error at Editting Grade msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at Editting Grade msg: {ex.Message}");
+                }
                 return RedirectToAction("Index");
             }
 
@@ -116,8 +137,16 @@ namespace repository_pattern.Controllers
             {
                 return RedirectToAction(nameof(Index));
             }
-
-            _unitOfWork.Grades.RemoveGrade(grade);
+            try
+            {
+                _unitOfWork.Grades.RemoveGrade(grade);
+                _logger.LogInformation($"Grade \"{grade.GradeName}\" Deleted");
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Error at Deleting Grade msg: {ex.Message}");
+                _unitOfWork.AddLog(LogLevel.Error, $"Error at Deleting Grade msg: {ex.Message}");
+            }
             return RedirectToAction(nameof(Index));
         }
     }

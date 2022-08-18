@@ -13,7 +13,6 @@ namespace DataAccess.Repositories
     public class ExchangeRepo : IExchangeRepo
     {
         private readonly DatabaseContext _context;
-
         public ExchangeRepo(DatabaseContext context)
         {
             _context = context;

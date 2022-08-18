@@ -13,9 +13,12 @@ builder.Services.AddDbContext<DatabaseContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseContext")));
 
 builder.Services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
 builder.Services.AddScoped<IStudentRepo, StudentRepo>();
 builder.Services.AddScoped<IGradeRepo, GradeRepo>();
 builder.Services.AddScoped<ISubjectRepo, SubjectRepo>();
+//builder.Services.AddScoped<ILoggerRepo, LoggerRepo>();
+
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();

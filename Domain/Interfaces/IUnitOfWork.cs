@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,7 +14,9 @@ namespace Domain.Interfaces
         IGradeRepo Grades { get; }
         IReportRepo Reports { get; }
         IExchangeRepo Exchanges { get; }
+       // ILoggerRepo Loggers { get; }
         //IGradeSubjectRepo GradeSubjects { get; }
         int Complete();
+        void AddLog(LogLevel logLevel, string message);
     }
 }

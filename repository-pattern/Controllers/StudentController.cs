@@ -9,9 +9,11 @@ namespace repository_pattern.Controllers
     public class StudentController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public StudentController(IUnitOfWork unitOfWork)
+        private readonly ILogger<StudentController> _logger;
+        public StudentController(IUnitOfWork unitOfWork, ILogger<StudentController> logger)
         {
             _unitOfWork = unitOfWork;
+            _logger = logger;
         }
         public async Task<IActionResult> Index(
              string currentFilter,
@@ -31,7 +33,6 @@ namespace repository_pattern.Controllers
                 searchString = currentFilter;
             }
 
-
             var students = _unitOfWork.Students.getFiltteredStudent(searchString, fromDate, toDate);
 
             int ps = _unitOfWork.Students.PageSize(pageSize);
@@ -47,7 +48,6 @@ namespace repository_pattern.Controllers
                 TotalPage = (int)Math.Ceiling(students.Count() / (double)ps),
                 PageIndex = pageNum,
             };
-
             var display = await students.Skip((pageNum - 1) * ps).Take(ps).ToListAsync();
             return View(display);
 
@@ -73,10 +73,21 @@ namespace repository_pattern.Controllers
         {
             if (ModelState.IsValid)
             {
-                _unitOfWork.Students.Add(student);
-                _unitOfWork.Complete();
+                try
+                {
+                 //   _logger.LogInformation($"Student {student.FirstName} Saved");
+                   // throw new NullReferenceException();
+                    _unitOfWork.Students.Add(student);
+                    _unitOfWork.Complete();
+                    _logger.LogInformation($"Student \"{student.FirstName}\" Saved");
+                }
+                catch(Exception ex)
+                {
+                    //add log to db
+                    _logger.LogError($"Error at saving student msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at saving student msg: {ex.Message}");
+                }
                 return RedirectToAction("Index");
-
             }
             ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
             return View(student);
@@ -88,7 +99,7 @@ namespace repository_pattern.Controllers
             {
                 return NotFound();
             }
-            var student = _unitOfWork.Students.GetById(id??0);
+            var student = _unitOfWork.Students.GetById(id ?? 0);
             if (student == null)
             {
                 return NotFound();
@@ -105,10 +116,21 @@ namespace repository_pattern.Controllers
 
             if (ModelState.IsValid)
             {
-               _unitOfWork.Students.Update(student);
-                _unitOfWork.Complete();
+                try
+                {
+                    _unitOfWork.Students.Update(student);
+                    _unitOfWork.Complete();
 
+                    _logger.LogInformation($"Student \"{student.FirstName}\" Editted");
+                }
+                catch(Exception ex)
+                {
+                    //add log to db
+                    _logger.LogError($"Error at Editting student msg: {ex.Message}");
+                    _unitOfWork.AddLog(LogLevel.Error, $"Error at Editting student msg: {ex.Message}");
+                }
                 return RedirectToAction("Index");
+
             }
 
             ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
@@ -122,10 +144,17 @@ namespace repository_pattern.Controllers
             {
                 return RedirectToAction(nameof(Index));
             }
-
-            _unitOfWork.Students.Remove(student);
-            _unitOfWork.Complete();
-
+            try
+            {
+                _unitOfWork.Students.Remove(student);
+                _unitOfWork.Complete();
+                _logger.LogInformation($"Student \"{student.FirstName}\" Deleted");
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Error at Deleting student msg: {ex.Message}");
+                _unitOfWork.AddLog(LogLevel.Error, $"Error at Deleting student msg: {ex.Message}");
+            }
             return RedirectToAction(nameof(Index));
         }
     }

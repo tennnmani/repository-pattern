@@ -1,4 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using Domain.Entities;
+using Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,16 @@ namespace DataAccess.Repositories
             _context = context;
         }
 
+        //public void AddLog(LogLevel logLevel, string message)
+        //{
+        //    var log = new Log
+        //    {
+        //        LogLevel = logLevel.ToString(),
+        //        Message = message,
+        //    };
+        //    _context.Add(log);
+        //    _context.SaveChanges();
+        //}
         public void Add(T entity)
         {
             _context.Set<T>().Add(entity);
@@ -57,7 +69,7 @@ namespace DataAccess.Repositories
             {
                 ps = Int32.Parse(pageSize);
             }
-            if(ps == 0)
+            if (ps == 0)
             {
                 ps = Count();
             }
