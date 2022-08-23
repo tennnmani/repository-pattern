@@ -22,7 +22,7 @@ namespace DataAccess.UnitOfWorks
             Students = new StudentRepo(_context);
             Subjects = new SubjectRepo(_context);
             Reports = new ReportRepo(_context);
-            Exchanges = new ExchangeRepo(_memoryCache);
+            Exchanges = new ExchangeRepo();
             //_memoryCache = memoryCache;
             //GradeSubjects = new GradeSubjectRepo(_context);
             // Loggers = new LoggerRepo(_context);
