@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace repository_pattern.Controllers
 {
@@ -8,10 +9,12 @@ namespace repository_pattern.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<SubjectController> _logger;
-        public SubjectController(IUnitOfWork unitOfWork, ILogger<SubjectController> logger)
+        private readonly IMemoryCache _memoryCache;
+        public SubjectController(IUnitOfWork unitOfWork, ILogger<SubjectController> logger, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _memoryCache = memoryCache;
         }
 
         public  IActionResult Index(
@@ -75,6 +78,9 @@ namespace repository_pattern.Controllers
                 {
                     _unitOfWork.Subjects.Add(subject);
                     _unitOfWork.Complete();
+
+
+                    _memoryCache.Remove("SubjectList");
                     _logger.LogInformation($"Subject \"{subject.SubjectName}\" Saved");
                 }
                 catch(Exception ex)
@@ -118,6 +124,8 @@ namespace repository_pattern.Controllers
                     //throw new Exception("ERROR");
                     _unitOfWork.Subjects.Update(subject);
                     _unitOfWork.Complete();
+
+                    _memoryCache.Remove("SubjectList");
                     _logger.LogInformation($"Subject \"{subject.SubjectName}\" Editted");
                 }
                 catch(Exception ex)
@@ -144,6 +152,8 @@ namespace repository_pattern.Controllers
             {
                 _unitOfWork.Subjects.Remove(subject);
                 _unitOfWork.Complete();
+
+                _memoryCache.Remove("SubjectList");
                 _logger.LogInformation($"Subject \"{subject.SubjectName}\" Deleted");
             }
             catch(Exception ex)

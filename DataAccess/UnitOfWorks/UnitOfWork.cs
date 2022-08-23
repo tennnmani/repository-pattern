@@ -1,6 +1,7 @@
 ﻿using DataAccess.Repositories;
 using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace DataAccess.UnitOfWorks
     public class UnitOfWork : IUnitOfWork
     {
         private readonly DatabaseContext _context;
+        protected readonly IMemoryCache _memoryCache;
         public UnitOfWork(DatabaseContext context)
         {
             _context = context;
@@ -20,9 +22,10 @@ namespace DataAccess.UnitOfWorks
             Students = new StudentRepo(_context);
             Subjects = new SubjectRepo(_context);
             Reports = new ReportRepo(_context);
-            Exchanges = new ExchangeRepo(_context);
+            Exchanges = new ExchangeRepo(_memoryCache);
+            //_memoryCache = memoryCache;
             //GradeSubjects = new GradeSubjectRepo(_context);
-           // Loggers = new LoggerRepo(_context);
+            // Loggers = new LoggerRepo(_context);
         }
         public IGradeRepo Grades { get; private set; }
         public IStudentRepo Students { get; private set; }
