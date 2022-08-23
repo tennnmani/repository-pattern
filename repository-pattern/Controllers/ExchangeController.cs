@@ -1,14 +1,17 @@
 ﻿using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace repository_pattern.Controllers
 {
     public class ExchangeController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-        public ExchangeController(IUnitOfWork unitOfWork)
+        private readonly IMemoryCache _memoryCache;
+        public ExchangeController(IUnitOfWork unitOfWork,IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
+            _memoryCache = memoryCache;
         }
         public async Task<IActionResult> Index()
         {

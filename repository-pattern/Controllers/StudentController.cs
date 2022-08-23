@@ -3,6 +3,7 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace repository_pattern.Controllers
 {
@@ -10,10 +11,12 @@ namespace repository_pattern.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<StudentController> _logger;
-        public StudentController(IUnitOfWork unitOfWork, ILogger<StudentController> logger)
+        private readonly IMemoryCache _memoryCache;
+        public StudentController(IUnitOfWork unitOfWork, ILogger<StudentController> logger, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _memoryCache = memoryCache;
         }
         public async Task<IActionResult> Index(
              string currentFilter,
@@ -63,7 +66,7 @@ namespace repository_pattern.Controllers
         }
         public IActionResult Create()
         {
-            ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
+            ViewData["GradeList"] = new SelectList(GetGrades(), "GradeId", "GradeName");
             return View();
         }
 
@@ -89,7 +92,8 @@ namespace repository_pattern.Controllers
                 }
                 return RedirectToAction("Index");
             }
-            ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
+
+            ViewData["GradeList"] = new SelectList(GetGrades(), "GradeId", "GradeName");
             return View(student);
         }
 
@@ -105,7 +109,7 @@ namespace repository_pattern.Controllers
                 return NotFound();
             }
 
-            ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
+            ViewData["GradeList"] = new SelectList(GetGrades(), "GradeId", "GradeName");
             return View(student);
         }
 
@@ -133,7 +137,7 @@ namespace repository_pattern.Controllers
 
             }
 
-            ViewData["GradeList"] = new SelectList(_unitOfWork.Grades.GetAll(), "GradeId", "GradeName");
+            ViewData["GradeList"] = new SelectList(GetGrades(), "GradeId", "GradeName");
             return View(student);
         }
 
@@ -156,6 +160,17 @@ namespace repository_pattern.Controllers
                 _unitOfWork.AddLog(LogLevel.Error, $"Error at Deleting student msg: {ex.Message}");
             }
             return RedirectToAction(nameof(Index));
+        }
+        private List<Grade> GetGrades()
+        {
+            List<Grade> grades = new List<Grade>();
+
+            if (!_memoryCache.TryGetValue("GradeList", out grades))
+            {
+                grades = _unitOfWork.Grades.GetAll().ToList();
+                _memoryCache.Set<List<Grade>>("GradeList", grades, TimeSpan.FromDays(10));
+            }
+            return grades;
         }
     }
 }

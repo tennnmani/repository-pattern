@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -12,11 +13,6 @@ namespace DataAccess.Repositories
 {
     public class ExchangeRepo : IExchangeRepo
     {
-        private readonly DatabaseContext _context;
-        public ExchangeRepo(DatabaseContext context)
-        {
-            _context = context;
-        }
 
         public async Task<List<Exchange>> CallExchange()
         {
@@ -28,10 +24,12 @@ namespace DataAccess.Repositories
 
             HttpClient client = new HttpClient();
             HttpResponseMessage response = client.GetAsync(apiUrl).Result;
-            if (response.IsSuccessStatusCode)
-            {
-                exchange = JsonConvert.DeserializeObject<List<Exchange>>(await response.Content.ReadAsStringAsync());
-            }
+
+            //_memoryCache.Set<List<Exchange>>(getCacheKey(DateTime.Now.AddDays(-1).Date.ToString()), exchange, new DateTimeOffset().AddDays(1));
+
+            exchange = JsonConvert.DeserializeObject<List<Exchange>>(await response.Content.ReadAsStringAsync());
+
+
             return exchange;
         }
 
@@ -116,6 +114,11 @@ namespace DataAccess.Repositories
             //}
 
             return (fromPrice / toPrice);
+        }
+
+        private string getCacheKey(string date)
+        {
+            return $"exchangefor{date}";
         }
     }
 }

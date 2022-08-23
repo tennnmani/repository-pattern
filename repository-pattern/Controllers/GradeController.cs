@@ -2,6 +2,7 @@
 using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace repository_pattern.Controllers
 {
@@ -9,10 +10,12 @@ namespace repository_pattern.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<GradeController> _logger;
-        public GradeController(IUnitOfWork unitOfWork, ILogger<GradeController> logger)
+        private readonly IMemoryCache _memoryCache;
+        public GradeController(IUnitOfWork unitOfWork, ILogger<GradeController> logger, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
+            _memoryCache = memoryCache;
         }
 
         public IActionResult Index(
@@ -60,7 +63,7 @@ namespace repository_pattern.Controllers
 
         public IActionResult Create()
         {
-            ViewData["Subject"] = _unitOfWork.Subjects.GetAll();
+            ViewData["Subject"] = GetSubjectList();
             return View();
         }
 
@@ -73,6 +76,8 @@ namespace repository_pattern.Controllers
                 try
                 {
                     _unitOfWork.Grades.CreateGrade(grade, subjectIndex);
+
+                    _memoryCache.Remove("GradeList");
                     _logger.LogInformation($"Grade \"{grade.GradeName}\" Saved");
                 }
                 catch(Exception ex)
@@ -84,8 +89,20 @@ namespace repository_pattern.Controllers
                 return RedirectToAction("Index");
 
             }
-            ViewData["Subject"] = _unitOfWork.Subjects.GetAll();
+            ViewData["Subject"] = GetSubjectList();
             return View(grade);
+        }
+
+        private List<Subject> GetSubjectList()
+        {
+            List<Subject> subjects = new List<Subject>();
+
+            if (!_memoryCache.TryGetValue("SubjectList", out subjects))
+            {
+                subjects = _unitOfWork.Subjects.GetAll().ToList();
+                _memoryCache.Set<List<Subject>>("GradeList", subjects, TimeSpan.FromDays(10));
+            }
+            return subjects;
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -101,7 +118,7 @@ namespace repository_pattern.Controllers
                 return NotFound();
             }
 
-            ViewData["Subject"] = _unitOfWork.Subjects.GetAll();
+            ViewData["Subject"] = GetSubjectList();
             return View(grade);
         }
 
@@ -116,6 +133,8 @@ namespace repository_pattern.Controllers
                 {
                     //throw new Exception("ERROR");
                     _unitOfWork.Grades.UpdateGrade(grade, subjectIndex);
+
+                    _memoryCache.Remove("GradeList");
                     _logger.LogInformation($"Grade \"{grade.GradeName}\" Editted");
                 }
                 catch(Exception ex)
@@ -126,7 +145,7 @@ namespace repository_pattern.Controllers
                 return RedirectToAction("Index");
             }
 
-            ViewData["Subject"] = _unitOfWork.Subjects.GetAll();
+            ViewData["Subject"] = GetSubjectList();
             return View(grade);
         }
 
@@ -140,6 +159,8 @@ namespace repository_pattern.Controllers
             try
             {
                 _unitOfWork.Grades.RemoveGrade(grade);
+
+                _memoryCache.Remove("GradeList");
                 _logger.LogInformation($"Grade \"{grade.GradeName}\" Deleted");
             }
             catch(Exception ex)
