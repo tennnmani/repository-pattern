@@ -93,18 +93,6 @@ namespace repository_pattern.Controllers
             return View(grade);
         }
 
-        private List<Subject> GetSubjectList()
-        {
-            List<Subject> subjects = new List<Subject>();
-
-            if (!_memoryCache.TryGetValue("SubjectList", out subjects))
-            {
-                subjects = _unitOfWork.Subjects.GetAll().ToList();
-                _memoryCache.Set<List<Subject>>("GradeList", subjects, TimeSpan.FromDays(10));
-            }
-            return subjects;
-        }
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -169,6 +157,17 @@ namespace repository_pattern.Controllers
                 _unitOfWork.AddLog(LogLevel.Error, $"Error at Deleting Grade msg: {ex.Message}");
             }
             return RedirectToAction(nameof(Index));
+        }
+        private List<Subject> GetSubjectList()
+        {
+            List<Subject> subjects = new List<Subject>();
+
+            if (!_memoryCache.TryGetValue("SubjectList", out subjects))
+            {
+                subjects = _unitOfWork.Subjects.GetAll().ToList();
+                _memoryCache.Set<List<Subject>>("SubjectList", subjects, TimeSpan.FromDays(10));
+            }
+            return subjects;
         }
     }
 }
