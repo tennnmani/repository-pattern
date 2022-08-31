@@ -3,6 +3,8 @@ using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using System.Collections;
+using StackExchange.Redis;
+using Newtonsoft.Json;
 
 namespace repository_pattern.Controllers
 {
@@ -18,6 +20,8 @@ namespace repository_pattern.Controllers
             _memoryCache = memoryCache;
         }
 
+        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("127.0.0.1:6379");
+
         public  IActionResult Index(
            string currentFilter,
            string searchString,
@@ -26,6 +30,36 @@ namespace repository_pattern.Controllers
            string toDate,
            string pageSize)
         {
+
+            var grades = _unitOfWork.Grades.GetAll().ToList();
+
+            IDatabase db = redis.GetDatabase();
+
+
+            db.StringSet("key2", JsonConvert.SerializeObject(grades), TimeSpan.FromMinutes(10));
+
+            var y2 = db.StringGet("key2");
+
+
+           // List<Grade> g = new List<Grade>();
+
+            var g = JsonConvert.DeserializeObject<List<Grade>>(y2);
+
+            //var asd = JsonConvert.DeserializeObject(grades);
+
+            var a1 = db.StringGet("key1");
+            db.StringSet("key", "string");
+
+            //delete key
+            db.KeyDelete("key1");
+
+
+            var x = db.StringGet("key");
+
+            db.StringSet("key1", "test", TimeSpan.FromMinutes(10));
+            var a = db.StringGet("key1");
+
+
             int pageNum = pageNumber ?? 1;
             if (searchString != null)
             {
@@ -80,8 +114,10 @@ namespace repository_pattern.Controllers
                     _unitOfWork.Subjects.Add(subject);
                     _unitOfWork.Complete();
 
-
-                    _memoryCache.Remove("SubjectList");
+                    IDatabase db = redis.GetDatabase();
+                    db.KeyDelete("SubjectList");
+                   // _memoryCache.Remove("SubjectList");
+                    
                     _logger.LogInformation($"Subject \"{subject.SubjectName}\" Saved");
                 }
                 catch(Exception ex)
@@ -126,7 +162,11 @@ namespace repository_pattern.Controllers
                     _unitOfWork.Subjects.Update(subject);
                     _unitOfWork.Complete();
 
-                    _memoryCache.Remove("SubjectList");
+                    //delete cache
+                    IDatabase db = redis.GetDatabase();
+                    db.KeyDelete("SubjectList");
+                    //_memoryCache.Remove("SubjectList");
+
                     _logger.LogInformation($"Subject \"{subject.SubjectName}\" Editted");
                 }
                 catch(Exception ex)
@@ -154,7 +194,10 @@ namespace repository_pattern.Controllers
                 _unitOfWork.Subjects.Remove(subject);
                 _unitOfWork.Complete();
 
-                _memoryCache.Remove("SubjectList");
+                IDatabase db = redis.GetDatabase();
+                db.KeyDelete("SubjectList");
+                //_memoryCache.Remove("SubjectList");
+                
                 _logger.LogInformation($"Subject \"{subject.SubjectName}\" Deleted");
             }
             catch(Exception ex)
