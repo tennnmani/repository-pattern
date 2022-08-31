@@ -11,12 +11,14 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
   options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseContext")));
+builder.Services.AddMemoryCache();
 
 builder.Services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
 builder.Services.AddScoped<IStudentRepo, StudentRepo>();
 builder.Services.AddScoped<IGradeRepo, GradeRepo>();
 builder.Services.AddScoped<ISubjectRepo, SubjectRepo>();
+builder.Services.AddScoped<IExchangeRepo, ExchangeRepo>();
 //builder.Services.AddScoped<ILoggerRepo, LoggerRepo>();
 
 builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();

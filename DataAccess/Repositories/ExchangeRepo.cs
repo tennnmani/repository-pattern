@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,9 @@ namespace DataAccess.Repositories
 {
     public class ExchangeRepo : IExchangeRepo
     {
-
         public async Task<List<Exchange>> CallExchange()
         {
+
             ServicePointManager.Expect100Continue = true;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
@@ -25,7 +26,24 @@ namespace DataAccess.Repositories
             HttpClient client = new HttpClient();
             HttpResponseMessage response = client.GetAsync(apiUrl).Result;
 
+            //var x = memoryCache.TryGetValue(getCacheKey(DateTime.Now.Date.ToString()), out exchange);
+
+            //var a = memoryCache.Get(getCacheKey(DateTime.Now.Date.ToString()));
+
             //_memoryCache.Set<List<Exchange>>(getCacheKey(DateTime.Now.AddDays(-1).Date.ToString()), exchange, new DateTimeOffset().AddDays(1));
+
+            //if (!memoryCache.TryGetValue(getCacheKey(DateTime.Now.Date.ToString()), out exchange))
+            //{
+            //    if (response.IsSuccessStatusCode)
+            //    {
+            //        exchange = JsonConvert.DeserializeObject<List<Exchange>>(await response.Content.ReadAsStringAsync());
+            //    }
+            //    memoryCache.Set<List<Exchange>>(getCacheKey(DateTime.Now.Date.ToString()), exchange, TimeSpan.FromDays(1));
+            //    memoryCache.Remove(getCacheKey(DateTime.Now.AddDays(-1).Date.ToString()));
+            //}
+
+            //var b = memoryCache.Get(getCacheKey(DateTime.Now.Date.ToString()));
+
 
             exchange = JsonConvert.DeserializeObject<List<Exchange>>(await response.Content.ReadAsStringAsync());
 

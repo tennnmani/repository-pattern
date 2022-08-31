@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace repository_pattern.Controllers
 {
@@ -12,6 +14,7 @@ namespace repository_pattern.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<StudentController> _logger;
         private readonly IMemoryCache _memoryCache;
+        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("127.0.0.1:6379");
         public StudentController(IUnitOfWork unitOfWork, ILogger<StudentController> logger, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
@@ -165,12 +168,26 @@ namespace repository_pattern.Controllers
         {
             List<Grade> grades = new List<Grade>();
 
-            if (!_memoryCache.TryGetValue("GradeList", out grades))
+            IDatabase db = redis.GetDatabase();
+
+            var gradeinit = db.StringGet("GradeList");
+            if (gradeinit.HasValue)
             {
-                grades = _unitOfWork.Grades.GetAll().ToList();
-                _memoryCache.Set<List<Grade>>("GradeList", grades, TimeSpan.FromDays(10));
+                return JsonConvert.DeserializeObject<List<Grade>>(gradeinit);
             }
-            return grades;
+            else
+            {
+                grades = _unitOfWork.Grades.GetAll().Select(s=> new Grade {GradeId = s.GradeId , GradeName = s.GradeName}).ToList();
+                db.StringSet("GradeList", JsonConvert.SerializeObject(grades), TimeSpan.FromMinutes(10));
+                return grades;
+            }
+
+            //if (!_memoryCache.TryGetValue("GradeList", out grades))
+            //{
+            //    grades = _unitOfWork.Grades.GetAll().ToList();
+            //    _memoryCache.Set<List<Grade>>("GradeList", grades, TimeSpan.FromDays(10));
+            //}
+            //return grades;
         }
     }
 }

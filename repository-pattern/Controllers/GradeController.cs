@@ -3,6 +3,8 @@ using Domain.Entities;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 
 namespace repository_pattern.Controllers
 {
@@ -11,6 +13,8 @@ namespace repository_pattern.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<GradeController> _logger;
         private readonly IMemoryCache _memoryCache;
+        ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("127.0.0.1:6379");
+
         public GradeController(IUnitOfWork unitOfWork, ILogger<GradeController> logger, IMemoryCache memoryCache)
         {
             _unitOfWork = unitOfWork;
@@ -77,7 +81,11 @@ namespace repository_pattern.Controllers
                 {
                     _unitOfWork.Grades.CreateGrade(grade, subjectIndex);
 
-                    _memoryCache.Remove("GradeList");
+                    //delete cache
+                    IDatabase db = redis.GetDatabase();
+                    db.KeyDelete("GradeList");
+                   // _memoryCache.Remove("GradeList");
+
                     _logger.LogInformation($"Grade \"{grade.GradeName}\" Saved");
                 }
                 catch(Exception ex)
@@ -121,8 +129,12 @@ namespace repository_pattern.Controllers
                 {
                     //throw new Exception("ERROR");
                     _unitOfWork.Grades.UpdateGrade(grade, subjectIndex);
+                    
+                    IDatabase db = redis.GetDatabase();
+                    db.KeyDelete("GradeList");
+                    //_memoryCache.Remove("GradeList");
 
-                    _memoryCache.Remove("GradeList");
+
                     _logger.LogInformation($"Grade \"{grade.GradeName}\" Editted");
                 }
                 catch(Exception ex)
@@ -148,7 +160,10 @@ namespace repository_pattern.Controllers
             {
                 _unitOfWork.Grades.RemoveGrade(grade);
 
-                _memoryCache.Remove("GradeList");
+                IDatabase db = redis.GetDatabase();
+                db.KeyDelete("GradeList");
+                //_memoryCache.Remove("GradeList");
+                
                 _logger.LogInformation($"Grade \"{grade.GradeName}\" Deleted");
             }
             catch(Exception ex)
@@ -158,16 +173,32 @@ namespace repository_pattern.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
         private List<Subject> GetSubjectList()
         {
             List<Subject> subjects = new List<Subject>();
 
-            if (!_memoryCache.TryGetValue("SubjectList", out subjects))
+            IDatabase db = redis.GetDatabase();
+            //var grades = _unitOfWork.Grades.GetAll().ToList();
+
+            var subjectlistint = db.StringGet("SubjectList");
+            if (subjectlistint.HasValue)
             {
-                subjects = _unitOfWork.Subjects.GetAll().ToList();
-                _memoryCache.Set<List<Subject>>("SubjectList", subjects, TimeSpan.FromDays(10));
+                return JsonConvert.DeserializeObject<List<Subject>>(subjectlistint);
             }
-            return subjects;
+            else
+            {
+                subjects = _unitOfWork.Subjects.GetAll().Select( s=> new Subject { SubjectId = s.SubjectId, SubjectName = s.SubjectName }).ToList();
+                db.StringSet("SubjectList", JsonConvert.SerializeObject(subjects), TimeSpan.FromMinutes(10));
+                return subjects;
+            }
+
+            //if (!_memoryCache.TryGetValue("SubjectList", out subjects))
+            //{
+            //    subjects = _unitOfWork.Subjects.GetAll().ToList();
+            //    _memoryCache.Set<List<Subject>>("SubjectList", subjects, TimeSpan.FromDays(10));
+            //}
+            //return subjects;
         }
     }
 }

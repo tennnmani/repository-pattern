@@ -14,7 +14,7 @@ namespace DataAccess.UnitOfWorks
     public class UnitOfWork : IUnitOfWork
     {
         private readonly DatabaseContext _context;
-        protected readonly IMemoryCache _memoryCache;
+        //protected readonly IMemoryCache _memoryCache;
         public UnitOfWork(DatabaseContext context)
         {
             _context = context;
